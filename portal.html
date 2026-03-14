@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Origin Admin Vault</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f9; margin: 0; display: flex; }
+        .sidebar { width: 250px; background: #003366; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .main { margin-left: 280px; padding: 30px; width: 100%; }
+        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: 600; margin-top: 5px; }
+        .nav-item { padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body id="adminBody" class="hidden">
+    <div class="sidebar">
+        <h2>Origin Admin</h2>
+        <div class="nav-item" onclick="showSec('orders-sec')">📦 New Orders</div>
+        <div class="nav-item" onclick="showSec('tech-sec')">🛠️ Technicians</div>
+        <div class="nav-item" onclick="showSec('price-sec')">💰 Pricing</div>
+        <div class="nav-item" onclick="showSec('review-sec')">⭐ Reviews</div>
+    </div>
+    <div class="main">
+        <div id="orders-sec" class="card">
+            <h2>Customer Bookings</h2>
+            <table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Action</th></tr></thead><tbody id="orderList"></tbody></table>
+        </div>
+
+        <div id="tech-sec" class="card hidden">
+            <h2>Technician Applications</h2>
+            <table><thead><tr><th>Name</th><th>Field</th><th>Experience</th><th>Details</th><th>Action</th></tr></thead><tbody id="techList"></tbody></table>
+        </div>
+
+        <div id="price-sec" class="card hidden">
+            <h2>Add Service Pricing</h2>
+            <select id="tSel"><option>Electrician</option><option>Civil Work</option><option>Surveyor</option><option>Fitter</option></select>
+            <input type="text" id="sN" placeholder="Service Name"> <input type="number" id="sP" placeholder="Price">
+            <button class="btn" style="background:orange;" onclick="addP()">Add</button>
+            <div id="pList"></div>
+        </div>
+
+        <div id="review-sec" class="card hidden">
+            <h2>Pending Reviews</h2>
+            <div id="revList"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGMVwci1n9MppCmnlfaT5VOnFZ879BNUM",
+            authDomain: "origin-technician-67876.firebaseapp.com",
+            projectId: "origin-technician-67876",
+            storageBucket: "origin-technician-67876.firebasestorage.app",
+            messagingSenderId: "33398191523",
+            appId: "1:33398191523:web:501466fb48d00ba4839616",
+            databaseURL: "https://origin-technician-67876-default-rtdb.firebaseio.com"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        window.onload = () => {
+            if(prompt("Access Code?") === "Humaira95235") { document.getElementById('adminBody').classList.remove('hidden'); loadAll(); }
+            else { window.location.href="index.html"; }
+        };
+
+        function showSec(id) { document.querySelectorAll('.card').forEach(c => c.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+
+        function loadAll() {
+            db.ref('orders').on('value', snap => {
+                let h = ""; snap.forEach(c => { h += `<tr><td>${c.val().customer}</td><td>${c.val().phone}</td><td>${c.val().service}</td><td><button class="btn" style="background:green;" onclick="db.ref('orders/${c.key}').remove()">Done</button></td></tr>`; });
+                document.getElementById('orderList').innerHTML = h;
+            });
+
+            db.ref('tech_requests').on('value', snap => {
+                let h = ""; snap.forEach(c => { 
+                    h += `<tr><td>${c.val().name}</td><td>${c.val().field}</td><td>${c.val().experience}</td>
+                    <td><button class="btn" style="background:#003366;" onclick="alert('Phone: ${c.val().phone}\\nEmail: ${c.val().email}\\nAadhar: ${c.val().aadhar}\\nAddress: ${c.val().address}')">Full Info</button></td>
+                    <td><button class="btn" style="background:red;" onclick="db.ref('tech_requests/${c.key}').remove()">Delete</button></td></tr>`; 
+                });
+                document.getElementById('techList').innerHTML = h;
+            });
+
+            db.ref('services').on('value', snap => {
+                let h = ""; snap.forEach(t => { h += `<h4>${t.key}</h4>`; t.forEach(s => { h += `<p>${s.val().name}: ₹${s.val().price} <button onclick="db.ref('services/${t.key}/${s.key}').remove()">X</button></p>`; }); });
+                document.getElementById('pList').innerHTML = h;
+            });
+
+            db.ref('review_requests').on('value', snap => {
+                let h = ""; snap.forEach(c => { h += `<div><p>${c.val().text}</p><button class="btn" style="background:green;" onclick="approveR('${c.key}',${c.val().stars},'${c.val().text}')">Approve</button></div><hr>`; });
+                document.getElementById('revList').innerHTML = h;
+            });
+        }
+        function addP() { db.ref('services/'+document.getElementById('tSel').value).push({ name: document.getElementById('sN').value, price: document.getElementById('sP').value }); alert("Price Added!"); }
+        function approveR(k, s, t) { db.ref('reviews').push({ stars: s, text: t }).then(() => db.ref('review_requests/'+k).remove()); }
+    </script>
+</body>
+</html>
