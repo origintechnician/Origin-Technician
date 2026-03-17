@@ -2,176 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Origin Admin | Command Center</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Origin Admin Vault</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --p-blue: #001D3D; --a-gold: #FFD700; }
-        body { background: #050505; color: #fff; font-family: 'Poppins', sans-serif; }
-        #login-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .admin-card { background: #111; border: 1px solid #333; border-radius: 15px; padding: 25px; margin-bottom: 20px; }
-        .nav-pills .nav-link { color: #888; font-weight: 600; transition: 0.3s; }
-        .nav-pills .nav-link.active { background: var(--a-gold) !important; color: #000 !important; }
-        .form-control, .form-select { background: #1a1a1a; border: 1px solid #444; color: #fff; }
-        .form-control:focus { border-color: var(--a-gold); box-shadow: none; color: #fff; background: #222; }
-        .table { color: #eee; border-color: #333; vertical-align: middle; }
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f9; margin: 0; display: flex; }
+        .sidebar { width: 250px; background: #003366; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .main { margin-left: 280px; padding: 30px; width: 100%; }
+        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: 600; margin-top: 5px; }
+        .nav-item { padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); }
+        .hidden { display: none; }
     </style>
 </head>
-<body>
+<body id="adminBody" class="hidden">
+    <div class="sidebar">
+        <h2>Origin Admin</h2>
+        <div class="nav-item" onclick="showSec('orders-sec')">📦 New Orders</div>
+        <div class="nav-item" onclick="showSec('tech-sec')">🛠️ Technicians</div>
+        <div class="nav-item" onclick="showSec('price-sec')">💰 Pricing</div>
+        <div class="nav-item" onclick="showSec('review-sec')">⭐ Reviews</div>
+    </div>
+    <div class="main">
+        <div id="orders-sec" class="card">
+            <h2>Customer Bookings</h2>
+            <table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Action</th></tr></thead><tbody id="orderList"></tbody></table>
+        </div>
 
-    <div id="login-overlay">
-        <div class="p-5 border border-warning rounded-4 bg-dark text-center shadow-lg" style="max-width: 400px; width: 90%;">
-            <h2 class="text-warning fw-bold mb-4">ORIGIN <span class="text-white">SECURE</span></h2>
-            <input type="email" id="adminID" class="form-control mb-3 text-center" placeholder="syedmdshaquib@gmail.com">
-            <input type="password" id="adminPass" class="form-control mb-4 text-center" placeholder="Password">
-            <button class="btn btn-warning w-100 fw-bold py-2" onclick="authorize()">AUTHORIZE ACCESS</button>
+        <div id="tech-sec" class="card hidden">
+            <h2>Technician Applications</h2>
+            <table><thead><tr><th>Name</th><th>Field</th><th>Experience</th><th>Details</th><th>Action</th></tr></thead><tbody id="techList"></tbody></table>
+        </div>
+
+        <div id="price-sec" class="card hidden">
+            <h2>Add Service Pricing</h2>
+            <select id="tSel"><option>Electrician</option><option>Civil Work</option><option>Surveyor</option><option>Fitter</option></select>
+            <input type="text" id="sN" placeholder="Service Name"> <input type="number" id="sP" placeholder="Price">
+            <button class="btn" style="background:orange;" onclick="addP()">Add</button>
+            <div id="pList"></div>
+        </div>
+
+        <div id="review-sec" class="card hidden">
+            <h2>Pending Reviews</h2>
+            <div id="revList"></div>
         </div>
     </div>
-
-    <div class="container py-5" id="main-content" style="display:none;">
-        <div class="d-flex justify-content-between align-items-center mb-5 border-bottom border-secondary pb-3">
-            <h2 class="text-warning fw-bold">COMMAND <span class="text-white">CENTER</span></h2>
-            <button class="btn btn-outline-danger btn-sm px-4" onclick="location.reload()">LOCK SYSTEM</button>
-        </div>
-
-        <ul class="nav nav-pills mb-4 gap-2">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#orders">🛒 Orders & Assign</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#pricing">💰 Price & Offers</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#techs">👷 Technicians</a></li>
-        </ul>
-
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="orders">
-                <div class="admin-card">
-                    <h5 class="text-warning mb-4">Customer Bookings & Logistics</h5>
-                    <div class="table-responsive">
-                        <table class="table table-dark table-hover">
-                            <thead><tr><th>Customer</th><th>Location</th><th>Service</th><th>Payment</th><th>Assign Tech</th><th>Action</th></tr></thead>
-                            <tbody id="orderList">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="pricing">
-                <div class="admin-card">
-                    <h5 class="text-warning mb-4">Marketing Banner & Price Controller</h5>
-                    <div class="mb-4">
-                        <label class="small text-muted mb-2">Live Offer Banner (Flipkart Style)</label>
-                        <input type="text" id="promoInput" class="form-control mb-2" placeholder="E.g. SUMMER MEGA SALE: 40% OFF">
-                        <button class="btn btn-warning fw-bold btn-sm" onclick="pushOffer()">PUSH OFFER</button>
-                    </div>
-                    <hr class="border-secondary">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <select class="form-select" id="tradeSelect">
-                                <option>Electrician</option><option>Fitter</option><option>Civil</option><option>Surveyor</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4"><input type="text" class="form-control" placeholder="Sub-Service Name"></div>
-                        <div class="col-md-2"><input type="number" class="form-control" placeholder="Price ₹"></div>
-                        <div class="col-md-2"><button class="btn btn-warning w-100 fw-bold">SAVE PRICE</button></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="techs">
-                <div class="admin-card">
-                    <h5 class="text-warning mb-4">Verified Technician Database</h5>
-                    <div class="table-responsive">
-                        <table class="table table-dark">
-                            <thead><tr><th>Name</th><th>Aadhar</th><th>Location</th><th>Experience</th><th>Skill</th></tr></thead>
-                            <tbody id="techData">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // Your Firebase Configuration
         const firebaseConfig = {
-          apiKey: "AIzaSyAoOxmaH349WPvpQrPFHS606KohbupHOXg",
-          authDomain: "origin-technician.firebaseapp.com",
-          databaseURL: "https://origin-technician-default-rtdb.firebaseio.com",
-          projectId: "origin-technician",
-          storageBucket: "origin-technician.firebasestorage.app",
-          messagingSenderId: "340591628901",
-          appId: "1:340591628901:web:228cf991564f2ef1726c8c",
-          measurementId: "G-43RXZXRP0G"
+            apiKey: "AIzaSyAGMVwci1n9MppCmnlfaT5VOnFZ879BNUM",
+            authDomain: "origin-technician-67876.firebaseapp.com",
+            projectId: "origin-technician-67876",
+            storageBucket: "origin-technician-67876.firebasestorage.app",
+            messagingSenderId: "33398191523",
+            appId: "1:33398191523:web:501466fb48d00ba4839616",
+            databaseURL: "https://origin-technician-67876-default-rtdb.firebaseio.com"
         };
-
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Security Authorization
-        function authorize() {
-            if(document.getElementById('adminID').value === "syedmdshaquib@gmail.com" && 
-               document.getElementById('adminPass').value === "Humaira95235") {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                loadData();
-            } else { alert("ACCESS DENIED"); }
-        }
+        window.onload = () => {
+            if(prompt("Access Code?") === "Humaira95235") { document.getElementById('adminBody').classList.remove('hidden'); loadAll(); }
+            else { window.location.href="index.html"; }
+        };
 
-        // Push Marketing Offer
-        function pushOffer() {
-            const offerText = document.getElementById('promoInput').value;
-            db.ref('marketing/activeOffer').set(offerText).then(() => {
-                alert("Success: Banner Updated Globally!");
+        function showSec(id) { document.querySelectorAll('.card').forEach(c => c.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+
+        function loadAll() {
+            db.ref('orders').on('value', snap => {
+                let h = ""; snap.forEach(c => { h += `<tr><td>${c.val().customer}</td><td>${c.val().phone}</td><td>${c.val().service}</td><td><button class="btn" style="background:green;" onclick="db.ref('orders/${c.key}').remove()">Done</button></td></tr>`; });
+                document.getElementById('orderList').innerHTML = h;
             });
-        }
 
-        // Load Live Data from Firebase
-        function loadData() {
-            // Load Orders
-            db.ref('bookings').on('value', (snapshot) => {
-                const orderList = document.getElementById('orderList');
-                orderList.innerHTML = '';
-                snapshot.forEach((childSnapshot) => {
-                    const data = childSnapshot.val();
-                    orderList.innerHTML += `
-                        <tr>
-                            <td>${data.name}<br><small class="text-muted">${data.phone}</small></td>
-                            <td>${data.location}</td>
-                            <td>${data.service}</td>
-                            <td><span class="text-success">${data.paymentMethod}</span></td>
-                            <td>
-                                <select class="form-select form-select-sm bg-dark text-white border-secondary">
-                                    <option>Select Tech</option>
-                                    <option>Manual Assign</option>
-                                </select>
-                            </td>
-                            <td><button class="btn btn-warning btn-sm">Update</button></td>
-                        </tr>`;
+            db.ref('tech_requests').on('value', snap => {
+                let h = ""; snap.forEach(c => { 
+                    h += `<tr><td>${c.val().name}</td><td>${c.val().field}</td><td>${c.val().experience}</td>
+                    <td><button class="btn" style="background:#003366;" onclick="alert('Phone: ${c.val().phone}\\nEmail: ${c.val().email}\\nAadhar: ${c.val().aadhar}\\nAddress: ${c.val().address}')">Full Info</button></td>
+                    <td><button class="btn" style="background:red;" onclick="db.ref('tech_requests/${c.key}').remove()">Delete</button></td></tr>`; 
                 });
+                document.getElementById('techList').innerHTML = h;
             });
 
-            // Load Technicians
-            db.ref('technicians').on('value', (snapshot) => {
-                const techData = document.getElementById('techData');
-                techData.innerHTML = '';
-                snapshot.forEach((childSnapshot) => {
-                    const data = childSnapshot.val();
-                    techData.innerHTML += `
-                        <tr>
-                            <td>${data.fullName}</td>
-                            <td>${data.aadhar}</td>
-                            <td>${data.city}</td>
-                            <td>${data.experience}</td>
-                            <td>${data.specialization}</td>
-                        </tr>`;
-                });
+            db.ref('services').on('value', snap => {
+                let h = ""; snap.forEach(t => { h += `<h4>${t.key}</h4>`; t.forEach(s => { h += `<p>${s.val().name}: ₹${s.val().price} <button onclick="db.ref('services/${t.key}/${s.key}').remove()">X</button></p>`; }); });
+                document.getElementById('pList').innerHTML = h;
+            });
+
+            db.ref('review_requests').on('value', snap => {
+                let h = ""; snap.forEach(c => { h += `<div><p>${c.val().text}</p><button class="btn" style="background:green;" onclick="approveR('${c.key}',${c.val().stars},'${c.val().text}')">Approve</button></div><hr>`; });
+                document.getElementById('revList').innerHTML = h;
             });
         }
+        function addP() { db.ref('services/'+document.getElementById('tSel').value).push({ name: document.getElementById('sN').value, price: document.getElementById('sP').value }); alert("Price Added!"); }
+        function approveR(k, s, t) { db.ref('reviews').push({ stars: s, text: t }).then(() => db.ref('review_requests/'+k).remove()); }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
