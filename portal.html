@@ -2,175 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Origin Admin | Stark Command Vault</title>
+    <title>Origin Admin Vault</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --cyan: #00f2ff; 
-            --stark-red: #ff2e2e;
-            --deep-bg: #010811; 
-            --sidebar-bg: rgba(10, 25, 47, 0.95);
-            --glass: rgba(255, 255, 255, 0.03);
-            --border-glow: rgba(0, 242, 255, 0.2);
-        }
-
-        body { 
-            font-family: 'Rajdhani', sans-serif; 
-            background: var(--deep-bg); 
-            color: #e6f1ff; 
-            margin: 0; 
-            display: flex;
-            overflow-x: hidden;
-            background-image: radial-gradient(circle at center, #0a192f 0%, #010811 100%);
-        }
-
-        /* --- Sidebar HUD --- */
-        .sidebar { 
-            width: 260px; 
-            background: var(--sidebar-bg); 
-            color: white; 
-            height: 100vh; 
-            padding: 30px 20px; 
-            position: fixed; 
-            border-right: 2px solid var(--cyan);
-            box-shadow: 10px 0 30px rgba(0, 242, 255, 0.1);
-            z-index: 100;
-        }
-
-        .sidebar h2 { 
-            font-family: 'Orbitron'; 
-            font-size: 1.2rem; 
-            letter-spacing: 2px; 
-            color: var(--cyan);
-            margin-bottom: 40px;
-            text-shadow: 0 0 10px var(--cyan);
-        }
-
-        .nav-item { 
-            padding: 15px; 
-            cursor: pointer; 
-            border-radius: 4px; 
-            margin-bottom: 15px; 
-            transition: 0.3s; 
-            font-family: 'Orbitron';
-            font-size: 0.8rem;
-            border: 1px solid transparent;
-            color: rgba(255,255,255,0.7);
-        }
-
-        .nav-item:hover { 
-            background: rgba(0, 242, 255, 0.1); 
-            border-color: var(--cyan);
-            color: var(--cyan);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
-        }
-
-        /* --- Main Content Area --- */
-        .main { 
-            margin-left: 300px; 
-            padding: 40px; 
-            width: calc(100% - 300px); 
-        }
-
-        .card { 
-            background: var(--glass); 
-            padding: 30px; 
-            border-radius: 8px; 
-            margin-bottom: 30px; 
-            border: 1px solid var(--border-glow);
-            backdrop-filter: blur(10px);
-            box-shadow: inset 0 0 20px rgba(0, 242, 255, 0.05);
-        }
-
-        h2 { font-family: 'Orbitron'; color: var(--cyan); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 25px; font-size: 1.5rem; }
-
-        /* --- Futuristic Tables --- */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { font-family: 'Orbitron'; font-size: 0.75rem; color: var(--cyan); padding: 15px; border-bottom: 2px solid var(--cyan); text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid rgba(0, 242, 255, 0.1); font-size: 0.95rem; }
-        tr:hover { background: rgba(0, 242, 255, 0.05); }
-
-        /* --- Control Buttons --- */
-        .btn { 
-            padding: 10px 20px; 
-            border: 1px solid var(--cyan); 
-            border-radius: 4px; 
-            cursor: pointer; 
-            background: transparent;
-            color: var(--cyan); 
-            font-family: 'Orbitron'; 
-            font-size: 0.7rem;
-            transition: 0.3s;
-            text-transform: uppercase;
-        }
-        .btn:hover { background: var(--cyan); color: var(--deep-bg); box-shadow: 0 0 20px var(--cyan); }
-
-        /* Input Styling */
-        input, select { 
-            background: rgba(255,255,255,0.05); border: 1px solid var(--border-glow); 
-            color: white; padding: 12px; border-radius: 4px; font-family: 'Rajdhani';
-        }
-
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f9; margin: 0; display: flex; }
+        .sidebar { width: 250px; background: #003366; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .main { margin-left: 280px; padding: 30px; width: 100%; }
+        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: 600; margin-top: 5px; }
+        .nav-item { padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 10px; transition: 0.3s; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); }
         .hidden { display: none; }
-        
-        /* Scanline Overlay */
-        body::after {
-            content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 2px);
-            pointer-events: none; z-index: 1000;
-        }
     </style>
 </head>
 <body id="adminBody" class="hidden">
     <div class="sidebar">
-        <h2>VAULT CONTROL</h2>
-        <div class="nav-item" onclick="showSec('orders-sec')">📦 INCOMING ORDERS</div>
-        <div class="nav-item" onclick="showSec('tech-sec')">🛠️ RECRUITMENT</div>
-        <div class="nav-item" onclick="showSec('price-sec')">💰 CORE PRICING</div>
-        <div class="nav-item" onclick="showSec('review-sec')">⭐ SYSTEM LOGS</div>
-        <div class="nav-item" onclick="window.location.href='index.html'" style="margin-top:50px; border-color:var(--stark-red); color:var(--stark-red);">🔒 LOGOUT</div>
+        <h2>Origin Admin</h2>
+        <div class="nav-item" onclick="showSec('orders-sec')">📦 New Orders</div>
+        <div class="nav-item" onclick="showSec('tech-sec')">🛠️ Technicians</div>
+        <div class="nav-item" onclick="showSec('price-sec')">💰 Pricing</div>
+        <div class="nav-item" onclick="showSec('review-sec')">⭐ Reviews</div>
     </div>
-
     <div class="main">
         <div id="orders-sec" class="card">
-            <h2>ACTIVE MISSIONS (ORDERS)</h2>
-            <table>
-                <thead><tr><th>NAME</th><th>PHONE</th><th>MODULE</th><th>STATUS</th></tr></thead>
-                <tbody id="orderList"></tbody>
-            </table>
+            <h2>Customer Bookings</h2>
+            <table><thead><tr><th>Name</th><th>Phone</th><th>Service</th><th>Action</th></tr></thead><tbody id="orderList"></tbody></table>
         </div>
 
         <div id="tech-sec" class="card hidden">
-            <h2>TECHNICIAN APPLICATIONS</h2>
-            <table>
-                <thead><tr><th>NAME</th><th>FIELD</th><th>EXP</th><th>INTEL</th><th>ACTION</th></tr></thead>
-                <tbody id="techList"></tbody>
-            </table>
+            <h2>Technician Applications</h2>
+            <table><thead><tr><th>Name</th><th>Field</th><th>Experience</th><th>Details</th><th>Action</th></tr></thead><tbody id="techList"></tbody></table>
         </div>
 
         <div id="price-sec" class="card hidden">
-            <h2>MARKET DATA INJECTION</h2>
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <select id="tSel"><option>Electrician</option><option>Civil Work</option><option>Surveyor</option><option>Fitter</option></select>
-                <input type="text" id="sN" placeholder="MODULE NAME"> 
-                <input type="number" id="sP" placeholder="VALUE (₹)">
-                <button class="btn" style="background:var(--cyan); color:black;" onclick="addP()">ADD DATA</button>
-            </div>
-            <div id="pList" style="max-height: 400px; overflow-y: auto;"></div>
+            <h2>Add Service Pricing</h2>
+            <select id="tSel"><option>Electrician</option><option>Civil Work</option><option>Surveyor</option><option>Fitter</option></select>
+            <input type="text" id="sN" placeholder="Service Name"> <input type="number" id="sP" placeholder="Price">
+            <button class="btn" style="background:orange;" onclick="addP()">Add</button>
+            <div id="pList"></div>
         </div>
 
         <div id="review-sec" class="card hidden">
-            <h2>FEEDBACK ANALYSIS</h2>
+            <h2>Pending Reviews</h2>
             <div id="revList"></div>
         </div>
     </div>
 
     <script>
-        // Firebase Config (Exactly as provided)
         const firebaseConfig = {
             apiKey: "AIzaSyAGMVwci1n9MppCmnlfaT5VOnFZ879BNUM",
             authDomain: "origin-technician-67876.firebaseapp.com",
@@ -184,60 +66,39 @@
         const db = firebase.database();
 
         window.onload = () => {
-            if(prompt("ENTER CLEARANCE CODE:") === "Humaira95235") { 
-                document.getElementById('adminBody').classList.remove('hidden'); 
-                loadAll(); 
-            }
+            if(prompt("Access Code?") === "Humaira95235") { document.getElementById('adminBody').classList.remove('hidden'); loadAll(); }
             else { window.location.href="index.html"; }
         };
 
-        function showSec(id) { 
-            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden')); 
-            document.getElementById(id).classList.remove('hidden'); 
-        }
+        function showSec(id) { document.querySelectorAll('.card').forEach(c => c.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
 
         function loadAll() {
             db.ref('orders').on('value', snap => {
-                let h = ""; snap.forEach(c => { 
-                    h += `<tr><td>${c.val().customer}</td><td>${c.val().phone}</td><td>${c.val().service}</td><td><button class="btn" style="border-color:green; color:green;" onclick="db.ref('orders/${c.key}').remove()">COMPLETE</button></td></tr>`; 
-                });
+                let h = ""; snap.forEach(c => { h += `<tr><td>${c.val().customer}</td><td>${c.val().phone}</td><td>${c.val().service}</td><td><button class="btn" style="background:green;" onclick="db.ref('orders/${c.key}').remove()">Done</button></td></tr>`; });
                 document.getElementById('orderList').innerHTML = h;
             });
 
             db.ref('tech_requests').on('value', snap => {
                 let h = ""; snap.forEach(c => { 
                     h += `<tr><td>${c.val().name}</td><td>${c.val().field}</td><td>${c.val().experience}</td>
-                    <td><button class="btn" onclick="alert('Phone: ${c.val().phone}\\nEmail: ${c.val().email}\\nAadhar: ${c.val().aadhar}\\nAddress: ${c.val().address}')">INTEL</button></td>
-                    <td><button class="btn" style="border-color:var(--stark-red); color:var(--stark-red);" onclick="db.ref('tech_requests/${c.key}').remove()">PURGE</button></td></tr>`; 
+                    <td><button class="btn" style="background:#003366;" onclick="alert('Phone: ${c.val().phone}\\nEmail: ${c.val().email}\\nAadhar: ${c.val().aadhar}\\nAddress: ${c.val().address}')">Full Info</button></td>
+                    <td><button class="btn" style="background:red;" onclick="db.ref('tech_requests/${c.key}').remove()">Delete</button></td></tr>`; 
                 });
                 document.getElementById('techList').innerHTML = h;
             });
 
             db.ref('services').on('value', snap => {
-                let h = ""; snap.forEach(t => { 
-                    h += `<h4 style='color:var(--cyan); font-family:Orbitron; margin-top:20px; border-left:3px solid var(--cyan); padding-left:10px;'>${t.key.toUpperCase()}</h4>`; 
-                    t.forEach(s => { h += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05)"><span>${s.val().name}</span><span>₹${s.val().price} <button class="btn" style="padding:2px 8px; font-size:10px; border-color:var(--stark-red);" onclick="db.ref('services/${t.key}/${s.key}').remove()">X</button></span></div>`; }); 
-                });
+                let h = ""; snap.forEach(t => { h += `<h4>${t.key}</h4>`; t.forEach(s => { h += `<p>${s.val().name}: ₹${s.val().price} <button onclick="db.ref('services/${t.key}/${s.key}').remove()">X</button></p>`; }); });
                 document.getElementById('pList').innerHTML = h;
             });
 
             db.ref('review_requests').on('value', snap => {
-                let h = ""; snap.forEach(c => { 
-                    h += `<div style="padding:15px; background:rgba(255,255,255,0.02); margin-bottom:10px; border-left:3px solid var(--cyan);"><p>${c.val().text}</p><button class="btn" onclick="approveR('${c.key}',${c.val().stars},'${c.val().text}')">AUTHORIZE</button></div>`; 
-                });
+                let h = ""; snap.forEach(c => { h += `<div><p>${c.val().text}</p><button class="btn" style="background:green;" onclick="approveR('${c.key}',${c.val().stars},'${c.val().text}')">Approve</button></div><hr>`; });
                 document.getElementById('revList').innerHTML = h;
             });
         }
-        function addP() { 
-            db.ref('services/'+document.getElementById('tSel').value).push({ 
-                name: document.getElementById('sN').value, 
-                price: document.getElementById('sP').value 
-            }); 
-            alert("CORE DATA INJECTED!"); 
-        }
-        function approveR(k, s, t) { 
-            db.ref('reviews').push({ stars: s, text: t }).then(() => db.ref('review_requests/'+k).remove()); 
-        }
+        function addP() { db.ref('services/'+document.getElementById('tSel').value).push({ name: document.getElementById('sN').value, price: document.getElementById('sP').value }); alert("Price Added!"); }
+        function approveR(k, s, t) { db.ref('reviews').push({ stars: s, text: t }).then(() => db.ref('review_requests/'+k).remove()); }
     </script>
 </body>
 </html>
